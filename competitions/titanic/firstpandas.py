@@ -176,7 +176,7 @@ def process_csv(filename):
 # Convert back to a numpy array
 train_df, garbage = process_csv('data/train.csv')
 
-low_corr_names = train_df.corr().loc[train_df.corr()['Survived'].abs() < 0.01, 'Survived'].index
+low_corr_names = train_df.corr().loc[train_df.corr()['Survived'].abs() < 0.05, 'Survived'].index
 for idxname in low_corr_names:
     train_df = train_df.drop([idxname], axis=1)
 
@@ -200,7 +200,7 @@ print 'Predicting...'
 output = clf.predict(test_data).astype(int)
 
 print 'Printing...'
-predictions_file = open("tenth.csv", "wb")
+predictions_file = open("eleventh.csv", "wb")
 open_file_object = csv.writer(predictions_file)
 open_file_object.writerow(["PassengerId","Survived"])
 open_file_object.writerows(zip(ids, output))
