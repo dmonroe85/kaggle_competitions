@@ -90,7 +90,7 @@ def quantiles(df_in, field,  size=5):
         quant += step
         lower_lim = df_in[field].dropna().quantile(quant-step)
         upper_lim = df_in[field].dropna().quantile(quant)
-        df_in[str(lower_lim) + '<' + field + '<=' + str(upper_lim)] = \
+        df_in[field + 'bin' + str(idx)] = \
                                        ((df_in[field] > lower_lim) & \
                                         (df_in[field] <= upper_lim)).astype(int)
     return df_in
@@ -172,13 +172,20 @@ def process_csv(filename):
     return enums, passids
     
 
-
 # The data is now ready to go. So lets fit to the train, then predict to the test!
 # Convert back to a numpy array
 train_df, garbage = process_csv('data/train.csv')
-print train_df.corr().loc[train_df.corr()['Survived'].abs() > 0.0, 'Survived'].order(ascending=False)
+
+low_corr_names = train_df.corr().loc[train_df.corr()['Survived'].abs() < 0.01, 'Survived'].index
+for idxname in low_corr_names:
+    train_df = train_df.drop([idxname], axis=1)
+
 train_data = train_df.values
+
 test_df, ids = process_csv('data/test.csv')
+for idxname in low_corr_names:
+    test_df = test_df.drop([idxname], axis=1)
+
 test_data = test_df.values
 
 
@@ -193,7 +200,7 @@ print 'Predicting...'
 output = clf.predict(test_data).astype(int)
 
 print 'Printing...'
-predictions_file = open("ninth.csv", "wb")
+predictions_file = open("tenth.csv", "wb")
 open_file_object = csv.writer(predictions_file)
 open_file_object.writerow(["PassengerId","Survived"])
 open_file_object.writerows(zip(ids, output))
