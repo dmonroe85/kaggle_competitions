@@ -80,6 +80,19 @@ def cabin_location(df_in, field):
 
     return df_in
 
+def quantiles(df_in, field,  size=5):
+    step = 1.0/(size)
+    quant = 0
+    for idx in xrange(size):
+        quant += step
+        lower_lim = df_in[field].dropna().quantile(quant-step)
+        upper_lim = df_in[field].dropna().quantile(quant)
+        df_in[str(lower_lim) + '<' + field + '<=' + str(upper_lim)] = \
+                                       ((df_in[field] > lower_lim) & \
+                                        (df_in[field] <= upper_lim)).astype(int)
+    return df_in
+
+
 # start of script
 def process_csv(filename):
     df = pd.read_csv(filename, header=0)
@@ -93,6 +106,7 @@ def process_csv(filename):
     enums = enum_df(enums, 'SibSp')
     enums = enum_df(enums, 'Parch')
 
+    # Age Analysis
     enums['AgeIsNull'] = pd.isnull(enums['Age']).astype(int)
     median_ages = np.zeros((2,3))
     for i in range(2):
@@ -103,22 +117,13 @@ def process_csv(filename):
                        (enums['Sex'] == i) & \
                        (enums['Pclass'] == j), 'Age'] = median_ages[i, j]
 
+    enums = quantiles(enums, 'Age', 10)
+
+    # Fare Analysis
     enums.loc[enums['Fare'].isnull(), 'Fare'] = enums['Fare'].dropna().median()
     enums['RodeForFree'] = (enums['Fare'] == 0).astype(int)
-    edp1 = enums.loc[enums['Pclass'] == 1, 'Fare'].describe()
-    # print edp1
-    # print enums.loc[enums['Pclass'] == 2, 'Fare'].describe()
-    # print enums.loc[enums['Pclass'] == 3, 'Fare'].describe()
 
-    # Misc
-    enums['AgeIsEst']  = ((enums['Age'] - enums['Age'].astype(int).astype(float)) == 0.5).astype(int)
-    enums['Age*Class'] = enums['Age']*enums['Pclass']
-    enums['Sex*Class'] = enums['Sex']*enums['Pclass']
-    enums['Fem&1stClass'] = ((enums['Sex'] == 0) & (enums['Pclass'] == 1)).astype(int)
-    enums['FamilySize'] = enums['SibSp'] + enums['Parch']
-    enums['TrvelAlone'] = (enums['FamilySize'] == 0).astype(int)
-    enums['Sex*Alone'] = enums['Sex']*enums['TrvelAlone']
-    enums['Class*Fare'] = enums['Pclass']*enums['Fare']
+    enums = quantiles(enums, 'Fare', 10)
 
     # Cabin Analysis
     enums['CabinNull'] = pd.isnull(enums['Cabin']).astype(int)
@@ -144,6 +149,19 @@ def process_csv(filename):
     enums = cabin_location(enums, 'Has2Cabins')
     enums = cabin_location(enums, 'Has1Cabin')
 
+    # Misc
+    enums['AgeIsEst']  = ((enums['Age'] - enums['Age'].astype(int).astype(float)) == 0.5).astype(int)
+    enums['Age*Class'] = enums['Age']*enums['Pclass']
+    enums = quantiles(enums, 'Age*Class', 10)
+    enums['Sex*Class'] = enums['Sex']*enums['Pclass']
+    enums['Fem&1stClass'] = ((enums['Sex'] == 0) & (enums['Pclass'] == 1)).astype(int)
+    enums['FamilySize'] = enums['SibSp'] + enums['Parch']
+    enums = enum_df(enums, 'FamilySize')
+    enums['TrvelAlone'] = (enums['FamilySize'] == 0).astype(int)
+    enums['Sex*Alone'] = enums['Sex']*enums['TrvelAlone']
+    enums['Class*Fare'] = enums['Pclass']*enums['Fare']
+    enums = quantiles(enums, 'Class*Fare', 10)
+
     # enums.to_csv('cabin.csv')
 
 
@@ -156,14 +174,15 @@ def process_csv(filename):
     passids = enums['PassengerId'].values
     enums = enums.drop(['PassengerId', 'Name', 'Ticket', 'Cabin'], axis=1)
     return enums, passids
-# print enums.corr().loc[enums.corr()['Survived'].abs() > 0.3, 'Survived']
+    
+
 
 # The data is now ready to go. So lets fit to the train, then predict to the test!
 # Convert back to a numpy array
 train_df, garbage = process_csv('data/train.csv')
+print train_df.corr().loc[train_df.corr()['Survived'].abs() > 0.1, 'Survived'].order(ascending=False)
 train_data = train_df.values
 test_df, ids = process_csv('data/test.csv')
-print test_df.isnull().sum()[test_df.isnull().sum() > 0]
 test_data = test_df.values
 
 
@@ -175,14 +194,12 @@ print 'Predicting...'
 output = forest.predict(test_data).astype(int)
 
 print 'Printing...'
-predictions_file = open("second_submission.csv", "wb")
+predictions_file = open("third_submission.csv", "wb")
 open_file_object = csv.writer(predictions_file)
 open_file_object.writerow(["PassengerId","Survived"])
 open_file_object.writerows(zip(ids, output))
 predictions_file.close()
 print 'Done.'
-
-# print enums[ enums['EmbarkedIsNull'] == 1][['Sex', 'Pclass', 'Age', 'Embarked']].head(10)
 
 """ Create Estimator Models to fill in columns with missing parameters 
     -For each missing variable, fill in the one with the least about of missing
