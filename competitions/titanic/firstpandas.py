@@ -5,6 +5,7 @@ import pandas as pd
 import pylab as P
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import LinearSVC
+from sklearn.linear_model import Lasso
 from sklearn.pipeline import Pipeline
 
 # Helper Functions
@@ -190,7 +191,7 @@ test_data = test_df.values
 
 print 'Training...'
 clf = Pipeline([
-    ('feature_selection', LinearSVC(penalty='l1', dual=False)),
+    ('feature_selection', RandomForestClassifier()),
     ('classification', RandomForestClassifier())
 ])
 clf = clf.fit( train_data[0::,1::], train_data[0::,0] )
@@ -199,7 +200,7 @@ print 'Predicting...'
 output = clf.predict(test_data).astype(int)
 
 print 'Printing...'
-predictions_file = open("fourth.csv", "wb")
+predictions_file = open("fifth.csv", "wb")
 open_file_object = csv.writer(predictions_file)
 open_file_object.writerow(["PassengerId","Survived"])
 open_file_object.writerows(zip(ids, output))
