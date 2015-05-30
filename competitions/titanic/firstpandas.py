@@ -169,7 +169,6 @@ def process_csv(filename):
 
     passids = enums['PassengerId'].values
     enums = enums.drop(['PassengerId', 'Name', 'Ticket', 'Cabin'], axis=1)
-    enums = enums.drop(['AtLeast1Cabin', 'AtLeast2Cabins', 'AtLeast3Cabins'], axis=1)
     return enums, passids
     
 
@@ -177,7 +176,7 @@ def process_csv(filename):
 # The data is now ready to go. So lets fit to the train, then predict to the test!
 # Convert back to a numpy array
 train_df, garbage = process_csv('data/train.csv')
-print train_df.corr().loc[train_df.corr()['Survived'].abs() > 0.1, 'Survived'].order(ascending=False)
+print train_df.corr().loc[train_df.corr()['Survived'].abs() > 0.0, 'Survived'].order(ascending=False)
 train_data = train_df.values
 test_df, ids = process_csv('data/test.csv')
 test_data = test_df.values
@@ -185,7 +184,7 @@ test_data = test_df.values
 
 print 'Training...'
 clf = Pipeline([
-    ('feature_selection', RandomForestClassifier(n_estimators=100)),
+    ('feature_selection', RandomForestClassifier()),
     ('classification', RandomForestClassifier())
 ])
 clf = clf.fit( train_data[0::,1::], train_data[0::,0] )
@@ -194,7 +193,7 @@ print 'Predicting...'
 output = clf.predict(test_data).astype(int)
 
 print 'Printing...'
-predictions_file = open("seventh.csv", "wb")
+predictions_file = open("eigth.csv", "wb")
 open_file_object = csv.writer(predictions_file)
 open_file_object.writerow(["PassengerId","Survived"])
 open_file_object.writerows(zip(ids, output))
