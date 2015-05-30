@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import pylab as P
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import LinearSVC
+from sklearn.pipeline import Pipeline
 
 # Helper Functions
 def enum_df(df_in, field, outname='', regex='', extract_idx=0):
@@ -187,14 +189,17 @@ test_data = test_df.values
 
 
 print 'Training...'
-forest = RandomForestClassifier(n_estimators=100)
-forest = forest.fit( train_data[0::,1::], train_data[0::,0] )
+clf = Pipeline([
+    ('feature_selection', LinearSVC(penalty='l1', dual=False)),
+    ('classification', RandomForestClassifier())
+])
+clf = clf.fit( train_data[0::,1::], train_data[0::,0] )
 
 print 'Predicting...'
-output = forest.predict(test_data).astype(int)
+output = clf.predict(test_data).astype(int)
 
 print 'Printing...'
-predictions_file = open("third_submission.csv", "wb")
+predictions_file = open("fourth.csv", "wb")
 open_file_object = csv.writer(predictions_file)
 open_file_object.writerow(["PassengerId","Survived"])
 open_file_object.writerows(zip(ids, output))
