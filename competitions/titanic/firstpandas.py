@@ -167,15 +167,9 @@ def process_csv(filename):
 
     # enums.to_csv('cabin.csv')
 
-
-    # enums['Age'].hist()
-    # P.show()
-    # enums['Pclass'].hist()
-    # P.show()
-    # enums['Age*Class'].hist()
-    # P.show()
     passids = enums['PassengerId'].values
     enums = enums.drop(['PassengerId', 'Name', 'Ticket', 'Cabin'], axis=1)
+    enums = enums.drop(['AtLeast1Cabin', 'AtLeast2Cabins', 'AtLeast3Cabins'], axis=1)
     return enums, passids
     
 
@@ -200,7 +194,7 @@ print 'Predicting...'
 output = clf.predict(test_data).astype(int)
 
 print 'Printing...'
-predictions_file = open("sixth.csv", "wb")
+predictions_file = open("seventh.csv", "wb")
 open_file_object = csv.writer(predictions_file)
 open_file_object.writerow(["PassengerId","Survived"])
 open_file_object.writerows(zip(ids, output))
