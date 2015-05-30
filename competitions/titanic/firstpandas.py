@@ -191,7 +191,7 @@ test_data = test_df.values
 
 print 'Training...'
 clf = Pipeline([
-    ('feature_selection', RandomForestClassifier()),
+    ('feature_selection', RandomForestClassifier(n_estimators=100)),
     ('classification', RandomForestClassifier())
 ])
 clf = clf.fit( train_data[0::,1::], train_data[0::,0] )
@@ -200,7 +200,7 @@ print 'Predicting...'
 output = clf.predict(test_data).astype(int)
 
 print 'Printing...'
-predictions_file = open("fifth.csv", "wb")
+predictions_file = open("sixth.csv", "wb")
 open_file_object = csv.writer(predictions_file)
 open_file_object.writerow(["PassengerId","Survived"])
 open_file_object.writerows(zip(ids, output))
