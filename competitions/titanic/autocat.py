@@ -1,4 +1,0 @@
-""" MEOW.  Bot.
-"""
-
-import csv
